@@ -3,73 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unblocked Games 2026</title>
+    <title>Unblocked Hub 2026</title>
     <style>
         :root { --bg: #0d0d0d; --card: #181818; --accent: #3b82f6; --text: #f3f4f6; }
         body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        h1 { text-align: center; font-size: 2.5rem; margin-bottom: 30px; color: var(--accent); }
+        h1 { text-align: center; font-size: 2.5rem; margin-bottom: 30px; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; }
+        
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
-        .card { background: var(--card); border-radius: 15px; padding: 12px; cursor: pointer; border: 1px solid #2a2a2a; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .card:hover { transform: scale(1.05); border-color: var(--accent); box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
-        .card img { width: 100%; aspect-ratio: 1; border-radius: 10px; object-fit: cover; }
-        .card p { margin-top: 10px; font-weight: bold; font-size: 0.9rem; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        #player { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; }
-        .close { position: absolute; top: 20px; right: 20px; padding: 12px 25px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; z-index: 1001; }
-        iframe { width: 100%; height: 100%; border: none; }
-        .error-msg { text-align: center; padding: 50px; color: #ef4444; }
+        .card { background: var(--card); border-radius: 15px; padding: 12px; cursor: pointer; border: 1px solid #2a2a2a; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
+        .card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
+        .card img { width: 100%; aspect-ratio: 1; border-radius: 10px; object-fit: cover; background: #222; }
+        .card p { margin-top: 10px; font-weight: bold; font-size: 0.85rem; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Game Overlay */
+        #player { display: none; position: fixed; inset: 0; background: #000; z-index: 9999; }
+        .controls { position: absolute; top: 15px; left: 15px; z-index: 10000; display: flex; gap: 10px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; }
+        .close-btn { background: #ef4444; }
+        .fullscreen-btn { background: #3b82f6; }
+        .btn:hover { opacity: 0.8; transform: scale(1.05); }
+
+        #game-area { width: 100%; height: 100%; border: none; }
+        .loading-screen { text-align: center; padding: 100px; font-size: 1.5rem; color: var(--accent); }
     </style>
 </head>
 <body>
 
-    <h1>🎮 UNBLOCKED HUB</h1>
-    <div id="game-grid" class="grid"><p style="text-align:center; grid-column: 1/-1;">Connecting to secure game servers...</p></div>
+    <h1>🎮 Unblocked Hub</h1>
+    <div id="game-grid" class="grid">
+        <div class="loading-screen">Bypassing CDN Filters...</div>
+    </div>
 
+    <!-- Fullscreen Player -->
     <div id="player">
-        <button class="close" onclick="closeGame()">✖ EXIT GAME</button>
-        <div id="game-content" style="height:100%"></div>
+        <div class="controls">
+            <button class="btn close-btn" onclick="closeGame()">✖ EXIT</button>
+            <button class="btn fullscreen-btn" onclick="toggleFS()">⛶ FULLSCREEN</button>
+        </div>
+        <div id="game-container" style="width:100%; height:100%;"></div>
     </div>
 
     <script>
-        // High-availability CDN link for 2026
-        const CDN_PRIMARY = "https://cdn.jsdelivr.net";
+        /**
+         * 2026 FIX: Using a CORS Proxy to prevent "Error loading games"
+         * We fetch from jsDelivr (CDN) but wrap it in a proxy to ensure 
+         * headers like 'Access-Control-Allow-Origin' are present.
+         */
+        const RAW_JSON = "https://cdn.jsdelivr.net";
+        const PROXY_URL = "https://api.allorigins.win" + encodeURIComponent(RAW_JSON);
 
-        async function fetchGames() {
+        async function initHub() {
             const grid = document.getElementById('game-grid');
             try {
-                const response = await fetch(CDN_PRIMARY);
-                if (!response.ok) throw new Error();
-                const data = await response.json();
+                const response = await fetch(PROXY_URL);
+                if (!response.ok) throw new Error("Proxy Failed");
+                const games = await response.json();
                 
                 grid.innerHTML = '';
-                // Adjusting fields to match TheUnblockedHub format
-                data.forEach(game => {
+                games.forEach(game => {
                     const card = document.createElement('div');
                     card.className = 'card';
                     card.innerHTML = `
-                        <img src="${game.img || 'https://placehold.co'}" alt="${game.name}">
-                        <p>${game.name}</p>
+                        <img src="${game.game_image_icon}" alt="${game.game_name}" loading="lazy">
+                        <p>${game.game_name}</p>
                     `;
-                    card.onclick = () => openGame(game.url);
+                    // Injects the raw <iframe> string from the JSON
+                    card.onclick = () => openGame(game.iframe);
                     grid.appendChild(card);
                 });
             } catch (err) {
-                grid.innerHTML = `<div class="error-msg"><h2>CDN Connection Failed</h2><p>Please disable any "Strict" tracking protection in your browser or AdBlockers, then refresh.</p></div>`;
+                console.error("Hub Error:", err);
+                grid.innerHTML = `<div class="loading-screen" style="color:#ef4444">
+                    CDN Blocked by Browser.<br>
+                    <small>Try disabling your AdBlocker or refresh the page.</small>
+                </div>`;
             }
         }
 
-        function openGame(url) {
-            document.getElementById('player').style.display = 'block';
-            document.getElementById('game-content').innerHTML = `<iframe src="${url}" allowfullscreen></iframe>`;
+        function openGame(embedHtml) {
+            const player = document.getElementById('player');
+            const container = document.getElementById('game-container');
+            player.style.display = 'block';
+            container.innerHTML = embedHtml;
+            // Ensure iframe fills the space
+            const ifr = container.querySelector('iframe');
+            if(ifr) {
+                ifr.style.width = "100%";
+                ifr.style.height = "100%";
+            }
             document.body.style.overflow = 'hidden';
         }
 
         function closeGame() {
             document.getElementById('player').style.display = 'none';
-            document.getElementById('game-content').innerHTML = '';
+            document.getElementById('game-container').innerHTML = '';
             document.body.style.overflow = 'auto';
         }
 
-        fetchGames();
+        function toggleFS() {
+            const el = document.getElementById('game-container');
+            if (el.requestFullscreen) el.requestFullscreen();
+        }
+
+        initHub();
     </script>
 </body>
 </html>
